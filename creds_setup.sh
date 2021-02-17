@@ -90,12 +90,12 @@ authorityKeyIdentifier = keyid:always,issuer:always
         OPTS=" -extensions v3_ca -config openssl-with-ca.cnf"
     fi
 
+    commonName=${1:-localhost}
+    SUBJ="/countryName=US/stateOrProvinceName=IL/localityName=Chicago/organizationName=CDIS/organizationalUnitName=PlanX/commonName=$commonName/emailAddress=cdis@uchicago.edu"
     if ! [[ -f openssl.cnf && -f ca.pem && -f ca-key.pem ]]; then
       echo "Generating a local certificate authority, and TLS certificates under Secrets/TLS/"
       # erase old certs if they exist
       /bin/rm -rf service.key service.crt
-      commonName=${1:-localhost}
-      SUBJ="/countryName=US/stateOrProvinceName=IL/localityName=Chicago/organizationName=CDIS/organizationalUnitName=PlanX/commonName=$commonName/emailAddress=cdis@uchicago.edu"
       openssl req -new -x509 -nodes -extensions v3_ca -keyout ca-key.pem \
           -out ca.pem -days 365 -subj $SUBJ $OPTS
       if [[ $? -eq 1 ]]; then
@@ -152,7 +152,7 @@ EOM
     if [[ ! -f service.key || ! -f service.crt ]]; then
       openssl genrsa -out "service.key" 2048
       openssl req -new -key "service.key" \
-          -out "service.csr" -subj $SUBJ
+          -out "service.csr" -subj $SUBJ $OPTS
       openssl ca -batch -in "service.csr" -config openssl.cnf \
           -extensions server_cert -days 365 -notext -out "service.crt"
     else
